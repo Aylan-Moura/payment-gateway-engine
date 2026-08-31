@@ -1,0 +1,37 @@
+name: Java CI Pipeline (Payment Gateway Engine)
+
+# Dispara a automação sempre que houver envio (push) ou Pull Request para as branches main ou develop
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # Executa em um servidor Linux fornecido gratuitamente pelo GitHub
+
+    steps:
+    # 1. Baixa o código do seu repositório para o servidor do GitHub
+    - name: Checkout do Código
+      uses: actions/checkout@v4
+
+    # 2. Configura a versão do Java (JDK 17)
+    - name: Configurar o Java JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'maven' # Ativa o cache do Maven para os próximos builds serem mais rápidos
+
+    # 3. Dá permissão de execução ao Maven Wrapper (se existir no projeto)
+    - name: Permissão no Maven Wrapper
+      run: chmod +x mvnw || true
+
+    # 4. Compila a aplicação
+    - name: Compilar a Aplicação
+      run: ./mvnw clean compile -DskipTests || mvn clean compile -DskipTests
+
+    # 5. Executa a suíte de testes automatizados (TDD + Testcontainers)
+    - name: Executar Testes Automatizados
+      run: ./mvnw test || mvn test
