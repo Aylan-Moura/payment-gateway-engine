@@ -1,0 +1,3 @@
+com/paymentgateway/core/adapters/in/web/PaymentControllerTest.class
+com/paymentgateway/core/usecase/CreateTransactionUseCaseTest.class
+com/paymentgateway/core/domain/TransactionTest.class

@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: processor-worker
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: adminpassword
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000ms

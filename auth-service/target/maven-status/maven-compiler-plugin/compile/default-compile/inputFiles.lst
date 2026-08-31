@@ -1,0 +1,13 @@
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/security/MerchantUserDetails.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/repository/MerchantRepository.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/dto/LoginRequest.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/dto/RegisterRequest.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/security/SecurityConfig.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/controller/AuthController.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/security/UserDetailsServiceImpl.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/dto/AuthResponse.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/AuthServiceApplication.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/service/AuthService.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/dto/RefreshRequest.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/security/JwtUtil.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/domain/MerchantEntity.java

@@ -1,0 +1,11 @@
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/payment-core-service/src/main/java/com/paymentgateway/core/domain/TransactionStatus.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/payment-core-service/src/main/java/com/paymentgateway/core/usecase/port/out/PublishPaymentEventPort.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/payment-core-service/src/main/java/com/paymentgateway/core/domain/PaymentMethod.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/payment-core-service/src/main/java/com/paymentgateway/core/usecase/port/out/SaveTransactionPort.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/payment-core-service/src/main/java/com/paymentgateway/core/adapters/in/web/PaymentController.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/payment-core-service/src/main/java/com/paymentgateway/core/domain/Transaction.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/payment-core-service/src/main/java/com/paymentgateway/core/adapters/in/web/PaymentRequest.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/payment-core-service/src/main/java/com/paymentgateway/core/usecase/CreateTransactionUseCase.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/payment-core-service/src/main/java/com/paymentgateway/core/adapters/in/web/PaymentResponse.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/payment-core-service/src/main/java/com/paymentgateway/core/PaymentCoreApplication.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/payment-core-service/src/main/java/com/paymentgateway/core/usecase/port/in/CreateTransactionCommand.java
