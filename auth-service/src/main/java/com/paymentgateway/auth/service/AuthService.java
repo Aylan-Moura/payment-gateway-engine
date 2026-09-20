@@ -46,7 +46,7 @@ public class AuthService {
         var jwtToken = jwtUtil.generateToken(userDetails);
         var refreshToken = jwtUtil.generateRefreshToken(userDetails);
         
-        return new AuthResponse(jwtToken, refreshToken);
+        return new AuthResponse(jwtToken, refreshToken, merchant.getId(), merchant.getApiKey());
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -58,7 +58,7 @@ public class AuthService {
         var jwtToken = jwtUtil.generateToken(userDetails);
         var refreshToken = jwtUtil.generateRefreshToken(userDetails);
         
-        return new AuthResponse(jwtToken, refreshToken);
+        return new AuthResponse(jwtToken, refreshToken, merchant.getId(), merchant.getApiKey());
     }
 
     public AuthResponse refresh(RefreshRequest request) {
@@ -71,7 +71,7 @@ public class AuthService {
             
             if (jwtUtil.isTokenValid(refreshToken, userDetails)) {
                 var accessToken = jwtUtil.generateToken(userDetails);
-                return new AuthResponse(accessToken, refreshToken);
+                return new AuthResponse(accessToken, refreshToken, merchant.getId(), merchant.getApiKey());
             }
         }
         throw new RuntimeException("Invalid refresh token");

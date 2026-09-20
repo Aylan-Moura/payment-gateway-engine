@@ -47,7 +47,9 @@ public class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists())
-                .andExpect(jsonPath("$.refreshToken").exists());
+                .andExpect(jsonPath("$.refreshToken").exists())
+                .andExpect(jsonPath("$.merchantId").exists())
+                .andExpect(jsonPath("$.apiKey").exists());
 
         assertTrue(merchantRepository.findByEmail("test@company.com").isPresent());
     }
@@ -95,7 +97,9 @@ public class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(login)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists())
-                .andExpect(jsonPath("$.refreshToken").exists());
+                .andExpect(jsonPath("$.refreshToken").exists())
+                .andExpect(jsonPath("$.merchantId").exists())
+                .andExpect(jsonPath("$.apiKey").exists());
     }
 
     @Test
@@ -121,6 +125,8 @@ public class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(refresh)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists())
-                .andExpect(jsonPath("$.refreshToken").exists());
+                .andExpect(jsonPath("$.refreshToken").exists())
+                .andExpect(jsonPath("$.merchantId").exists())
+                .andExpect(jsonPath("$.apiKey").exists());
     }
 }
