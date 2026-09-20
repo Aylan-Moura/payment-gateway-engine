@@ -4,6 +4,7 @@
 /home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/dto/RegisterRequest.java
 /home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/security/SecurityConfig.java
 /home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/controller/AuthController.java
+/home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/config/OpenApiConfig.java
 /home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/security/UserDetailsServiceImpl.java
 /home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/dto/AuthResponse.java
 /home/aylan/.gemini/antigravity/scratch/payment-gateway-engine/auth-service/src/main/java/com/paymentgateway/auth/AuthServiceApplication.java

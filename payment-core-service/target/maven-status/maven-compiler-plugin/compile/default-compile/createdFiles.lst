@@ -5,6 +5,7 @@ com/paymentgateway/core/PaymentCoreApplication.class
 com/paymentgateway/core/adapters/in/web/PaymentRequest.class
 com/paymentgateway/core/usecase/CreateTransactionUseCase.class
 com/paymentgateway/core/domain/PaymentMethod.class
+com/paymentgateway/core/config/OpenApiConfig.class
 com/paymentgateway/core/usecase/port/out/SaveTransactionPort.class
 com/paymentgateway/core/adapters/in/web/PaymentController.class
 com/paymentgateway/core/usecase/port/out/PublishPaymentEventPort.class

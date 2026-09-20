@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.paymentgateway.gateway.RateLimitIntegrationTest" time="0.005" tests="1" errors="0" skipped="1" failures="0">
+  <properties/>
+  <testcase name="shouldAllowBurstAndThenRejectRequestsPerApiKey" classname="com.paymentgateway.gateway.RateLimitIntegrationTest" time="0.0">
+    <skipped message="disabledWithoutDocker is true and Docker is not available"/>
+    <system-out><![CDATA[20:58:38.093 [main] WARN org.testcontainers.dockerclient.DockerClientProviderStrategy -- DOCKER_HOST unix:///var/run/docker.sock is not listening
+20:58:38.102 [main] INFO org.testcontainers.dockerclient.DockerMachineClientProviderStrategy -- docker-machine executable was not found on PATH ([/home/aylan/.opencode/bin, /home/aylan/.nvm/versions/node/v24.21.0/bin, /home/aylan/.opencode/bin, /usr/local/sbin, /usr/local/bin, /usr/sbin, /usr/bin, /sbin, /bin, /usr/games, /usr/local/games, /snap/bin, /snap/bin, /home/aylan/.antigravity/extensions/vscjava.vscode-java-debug-0.59.0-universal/bundled/scripts/noConfigScripts])
+20:58:38.103 [main] ERROR org.testcontainers.dockerclient.DockerClientProviderStrategy -- Could not find a valid Docker environment. Please check configuration. Attempted configurations were:
+	DockerDesktopClientProviderStrategy: failed with exception NullPointerException (Cannot invoke "java.nio.file.Path.toString()" because the return value of "org.testcontainers.dockerclient.DockerDesktopClientProviderStrategy.getSocketPath()" is null)As no valid configuration was found, execution cannot continue.
+See https://java.testcontainers.org/on_failure.html for more details.
+]]></system-out>
+  </testcase>
+</testsuite>

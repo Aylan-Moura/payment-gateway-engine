@@ -17,6 +17,7 @@
         <module>auth-service</module>
         <module>payment-core-service</module>
         <module>processor-worker</module>
+        <module>e2e-tests</module>
     </modules>
 
     <properties>

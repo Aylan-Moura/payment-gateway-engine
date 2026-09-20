@@ -42,6 +42,99 @@ services:
       - payment-network
     restart: unless-stopped
 
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_gateway
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=adminpassword
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=admin
+      - SPRING_RABBITMQ_PASSWORD=adminpassword
+      - JWT_SECRET=super-secret-jwt-key-change-in-production-must-be-256-bits
+    networks:
+      - payment-network
+    depends_on:
+      - postgres
+      - rabbitmq
+    restart: unless-stopped
+
+  payment-core-service:
+    build:
+      context: ./payment-core-service
+      dockerfile: Dockerfile
+    container_name: payment-core-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_gateway
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=adminpassword
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=admin
+      - SPRING_RABBITMQ_PASSWORD=adminpassword
+    networks:
+      - payment-network
+    depends_on:
+      - postgres
+      - rabbitmq
+    restart: unless-stopped
+
+  processor-worker:
+    build:
+      context: ./processor-worker
+      dockerfile: Dockerfile
+    container_name: processor-worker
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_gateway
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=adminpassword
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=admin
+      - SPRING_RABBITMQ_PASSWORD=adminpassword
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_S3_BUCKET=payment-receipts
+    networks:
+      - payment-network
+    depends_on:
+      - postgres
+      - rabbitmq
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - AUTH_SERVICE_URL=http://auth-service:8081
+      - PAYMENT_CORE_SERVICE_URL=http://payment-core-service:8082
+    networks:
+      - payment-network
+    depends_on:
+      - redis
+      - auth-service
+      - payment-core-service
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:v2.45.0
     container_name: prometheus-gateway

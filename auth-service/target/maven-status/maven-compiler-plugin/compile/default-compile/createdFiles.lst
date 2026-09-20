@@ -4,6 +4,7 @@ com/paymentgateway/auth/dto/RegisterRequest.class
 com/paymentgateway/auth/security/UserDetailsServiceImpl.class
 com/paymentgateway/auth/security/MerchantUserDetails.class
 com/paymentgateway/auth/security/SecurityConfig.class
+com/paymentgateway/auth/config/OpenApiConfig.class
 com/paymentgateway/auth/security/JwtUtil.class
 com/paymentgateway/auth/dto/RefreshRequest.class
 com/paymentgateway/auth/service/AuthService.class
