@@ -1,0 +1,64 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "title": "HTTP Request Rate (Throughput)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(rate(http_server_requests_seconds_count{job=\"api-gateway\"}[1m])) by (uri)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "title": "System CPU Usage",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "system_cpu_usage",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["payment-gateway"],
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Payment Gateway Overview",
+  "version": 1,
+  "weekStart": ""
+}

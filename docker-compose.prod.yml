@@ -183,10 +183,14 @@ services:
     container_name: grafana-gateway-prod
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_INSTALL_PLUGINS: ""
     ports:
       - "3000:3000"
     volumes:
       - grafanadata:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/etc/grafana/dashboards
     networks:
       - payment-network
     depends_on:

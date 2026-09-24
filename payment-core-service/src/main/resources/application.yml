@@ -1,9 +1,9 @@
 server:
-  port: 8083
+  port: 8082
 
 spring:
   application:
-    name: processor-worker
+    name: payment-core-service
   datasource:
     url: jdbc:postgresql://localhost:5432/payment_gateway
     username: admin
@@ -23,17 +23,11 @@ spring:
     port: 5672
     username: admin
     password: adminpassword
-    listener:
-      simple:
-        retry:
-          enabled: true
-          max-attempts: 3
-          initial-interval: 1000ms
 
-aws:
-  s3:
-    bucket: payment-receipts
-    endpoint-url: http://localhost:4566
+app:
+  rabbitmq:
+    exchange: payment.exchange
+    routing-key: payment.created
 
 management:
   endpoints:
