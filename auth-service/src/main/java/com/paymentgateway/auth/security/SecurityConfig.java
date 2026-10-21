@@ -15,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 
+import org.springframework.http.HttpMethod;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -28,8 +30,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
+            .cors(AbstractHttpConfigurer::disable) // Disable CORS in Spring Security; handled by API Gateway
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/**", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/api/v1/auth/**", "/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh", "/error").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -37,6 +42,11 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+    /*
+     * CORS is intentionally NOT configured here. It is centralized in the api-gateway
+     * (see api-gateway/src/main/resources/application.yml -> spring.cloud.gateway.globalcors).
+     */
 
     @Bean
     public AuthenticationProvider authenticationProvider() {

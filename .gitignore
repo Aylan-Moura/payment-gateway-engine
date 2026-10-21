@@ -1,0 +1,31 @@
+# Build artifacts
+**/target/
+*.class
+
+# Frontend
+frontend-dashboard/node_modules/
+frontend-dashboard/dist/
+frontend-dashboard/.angular/
+frontend-dashboard/.vite/
+frontend-dashboard/.sass-cache/
+frontend-dashboard/coverage/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs / temp
+*.log
+logs/
+tmp/
+prints
+
+# IDE / OS
+.idea/
+.DS_Store
+Thumbs.db
+
+# Agent tooling (local)
+.agents/
+.opencode/

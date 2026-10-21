@@ -1,10 +1,10 @@
 package com.paymentgateway.core.adapters.out.messaging;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paymentgateway.core.domain.Transaction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -22,17 +22,19 @@ public class PublishPaymentEventAdapterTest {
     @Mock
     private RabbitTemplate rabbitTemplate;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Test
-    void shouldPublishPaymentEventSuccessfully() {
-        PublishPaymentEventAdapter adapter = new PublishPaymentEventAdapter(rabbitTemplate, "payment.exchange", "payment.created");
+    void shouldPublishPaymentEventSuccessfully() throws Exception {
+        PublishPaymentEventAdapter adapter = new PublishPaymentEventAdapter(rabbitTemplate, objectMapper, "payment.exchange", "payment.created");
         Transaction tx = new Transaction(UUID.randomUUID(), new BigDecimal("250.00"), "CREDIT_CARD");
 
         adapter.publish(tx);
 
-        ArgumentCaptor<PaymentEventMessage> captor = ArgumentCaptor.forClass(PaymentEventMessage.class);
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(rabbitTemplate).convertAndSend(eq("payment.exchange"), eq("payment.created"), captor.capture());
 
-        PaymentEventMessage sent = captor.getValue();
+        PaymentEventMessage sent = objectMapper.readValue(captor.getValue(), PaymentEventMessage.class);
         assertEquals(tx.getId(), sent.getTransactionId());
         assertEquals(tx.getMerchantId(), sent.getMerchantId());
         assertEquals(tx.getAmount(), sent.getAmount());

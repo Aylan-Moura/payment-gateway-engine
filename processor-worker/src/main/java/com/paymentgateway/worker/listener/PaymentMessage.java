@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 @Data
 public class PaymentMessage {
     private UUID transactionId;
+    private UUID merchantId;
     private BigDecimal amount;
+    private String paymentMethod;
     private String status;
 }

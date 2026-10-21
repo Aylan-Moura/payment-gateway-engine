@@ -3,7 +3,6 @@ package com.paymentgateway.worker.service;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -12,6 +11,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -30,17 +30,22 @@ public class S3ReceiptServiceTest {
     }
 
     @Test
-    void shouldUploadReceiptToS3() {
+    void shouldUploadReceiptToS3() throws Exception {
         UUID txId = UUID.randomUUID();
-        String receiptContent = "Receipt for transaction " + txId;
-        
+        byte[] receiptContent = "%PDF-1.4 fake receipt".getBytes();
+
         service.uploadReceipt(txId, receiptContent);
-        
+
         ArgumentCaptor<PutObjectRequest> requestCaptor = ArgumentCaptor.forClass(PutObjectRequest.class);
-        verify(s3Client).putObject(requestCaptor.capture(), any(RequestBody.class));
-        
+        ArgumentCaptor<RequestBody> bodyCaptor = ArgumentCaptor.forClass(RequestBody.class);
+        verify(s3Client).putObject(requestCaptor.capture(), bodyCaptor.capture());
+
         PutObjectRequest request = requestCaptor.getValue();
         assertEquals("payment-receipts-bucket", request.bucket());
-        assertEquals("receipts/" + txId + ".txt", request.key());
+        assertEquals("receipts/" + txId + ".pdf", request.key());
+        assertEquals("application/pdf", request.contentType());
+
+        byte[] uploaded = bodyCaptor.getValue().contentStreamProvider().newStream().readAllBytes();
+        assertArrayEquals(receiptContent, uploaded);
     }
 }

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design - Payment Gateway Engine</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.mjs';
+        
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const container = document.getElementById('diagram');
+            const code = container.textContent.trim();
+            const { svg } = await mermaid.render('mermaid-svg', code);
+            container.innerHTML = svg;
+
+            const svgElement = container.querySelector('svg');
+            if (svgElement) {
+                svgElement.removeAttribute('height');
+                svgElement.style.width = '100%';
+                svgElement.style.height = 'auto';
+                svgElement.style.minWidth = '1200px';
+                setupPanZoom();
+            }
+        });
+    </script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 1rem 1.5rem;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        header p {
+            font-size: 0.875rem;
+            color: var(--text-sub);
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: #334155;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .btn:hover {
+            background-color: #475569;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .zoom-level {
+            font-size: 0.875rem;
+            color: var(--text-sub);
+            min-width: 50px;
+            text-align: center;
+        }
+
+        #viewport {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #ffffff;
+            cursor: grab;
+        }
+
+        #viewport:active {
+            cursor: grabbing;
+        }
+
+        #canvas {
+            position: absolute;
+            transform-origin: 0 0;
+            transition: transform 0.05s ease-out;
+            padding: 40px;
+            display: inline-block;
+        }
+
+        #diagram {
+            display: inline-block;
+        }
+
+        #diagram svg {
+            display: block;
+            max-width: none !important;
+        }
+
+        .hint {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(6px);
+            color: #cbd5e1;
+            padding: 0.5rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Payment Gateway Engine — System Design</h1>
+            <p>Arquitetura de Microsserviços e Fluxo Assíncrono</p>
+        </div>
+        <div class="controls">
+            <button class="btn" id="btn-zoom-out" title="Diminuir Zoom">🔍 -</button>
+            <span class="zoom-level" id="zoom-text">100%</span>
+            <button class="btn" id="btn-zoom-in" title="Aumentar Zoom">🔍 +</button>
+            <button class="btn" id="btn-reset" title="Restaurar visualização">↺ Reset</button>
+            <button class="btn btn-primary" id="btn-fit" title="Ajustar à tela">⛶ Ajustar</button>
+        </div>
+    </header>
+
+    <div id="viewport">
+        <div id="canvas">
+            <div id="diagram">
+graph TD
+    %% Estilos de nós
+    classDef client fill:#3b82f6,stroke:#1d4ed8,color:#fff,stroke-width:2px;
+    classDef gateway fill:#f59e0b,stroke:#d97706,color:#fff,stroke-width:2px;
+    classDef service fill:#10b981,stroke:#047857,color:#fff,stroke-width:2px;
+    classDef infra fill:#6b7280,stroke:#374151,color:#fff,stroke-width:2px;
+    classDef storage fill:#8b5cf6,stroke:#6d28d9,color:#fff,stroke-width:2px;
+
+    %% Clientes externos
+    subgraph Clients [" Camada de Apresentação & Clientes "]
+        FE["Frontend Dashboard\n(SPA / Bootstrap 5)"]:::client
+        API_CLIENT["Sistemas de Lojistas\n(Webhooks & REST APIs)"]:::client
+    end
+
+    %% Entrada do Sistema
+    subgraph Edge [" Edge Layer "]
+        GW["API Gateway\n(Spring Cloud Gateway)"]:::gateway
+        REDIS[("Redis\n(Rate Limiting 10 req/s)")]:::storage
+    end
+
+    %% Microsserviços Principais
+    subgraph CoreServices [" Core Application Domain "]
+        AUTH["Auth Service\n(Spring Security + JWT)"]:::service
+        PAYMENT["Payment Core Service\n(Clean Architecture)"]:::service
+        WORKER["Processor Worker\n(Spring Retry + Background Worker)"]:::service
+    end
+
+    %% Persistência e Mensageria
+    subgraph Persistence [" Persistence & Messaging Layer "]
+        DB_AUTH[("PostgreSQL\n(Tabela: merchants)")]:::storage
+        DB_PAYMENT[("PostgreSQL\n(Tabela: transactions)")]:::storage
+        
+        subgraph RabbitMQ [" RabbitMQ Message Broker "]
+            EXCHANGE["payment.exchange"]:::infra
+            QUEUE["payment.created (Queue)"]:::infra
+            DLQ["payment.dlq (Dead Letter Queue)"]:::infra
+        end
+        
+        S3[("AWS S3 / LocalStack\n(Receipt Storage)")]:::storage
+    end
+
+    %% Monitoramento
+    subgraph Observability [" Observabilidade & Monitoramento "]
+        PROM["Prometheus\n(Métricas / Actuator)"]:::infra
+        GRAF["Grafana\n(Dashboards de Latência, Erros & DLQ)"]:::infra
+    end
+
+    %% Conexões - Edge & Auth
+    FE -->|HTTP/REST| GW
+    API_CLIENT -->|HTTP/REST| GW
+    GW <-->|Check Rate Limit| REDIS
+    GW -->|/api/v1/auth| AUTH
+    GW -->|/api/v1/payments| PAYMENT
+
+    AUTH -->|CRUD Lojistas| DB_AUTH
+
+    %% Conexões - Fluxo de Pagamento
+    PAYMENT -->|1. Salva 'PENDING'| DB_PAYMENT
+    PAYMENT -->|2. Publica evento| EXCHANGE
+    EXCHANGE -->|Routing Key| QUEUE
+
+    %% Conexões - Processamento Assíncrono
+    QUEUE -->|3. Consome evento| WORKER
+    WORKER -->|4. Atualiza para 'APPROVED'| DB_PAYMENT
+    WORKER -->|5. Salva Recibo| S3
+    WORKER -.->|6. Notificação Webhook| API_CLIENT
+    WORKER -.->|Em caso de falha persistente| DLQ
+
+    %% Conexões - Observabilidade
+    AUTH -.->|Métricas| PROM
+    PAYMENT -.->|Métricas| PROM
+    WORKER -.->|Métricas| PROM
+    GW -.->|Métricas| PROM
+    PROM --> GRAF
+            </div>
+        </div>
+        <div class="hint">💡 Arraste com o mouse para mover • Role o scroll para zoom</div>
+    </div>
+
+    <script>
+        function setupPanZoom() {
+            const viewport = document.getElementById('viewport');
+            const canvas = document.getElementById('canvas');
+            const zoomText = document.getElementById('zoom-text');
+            const diagram = document.getElementById('diagram');
+
+            let scale = 1.15;
+            let translateX = 40;
+            let translateY = 20;
+            let isDragging = false;
+            let startX = 0;
+            let startY = 0;
+
+            function updateTransform() {
+                canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+                zoomText.textContent = `${Math.round(scale * 100)}%`;
+            }
+
+            function zoom(delta, originX = viewport.clientWidth / 2, originY = viewport.clientHeight / 2) {
+                const prevScale = scale;
+                scale = Math.min(Math.max(0.3, scale + delta), 3.5);
+
+                const factor = scale / prevScale;
+                translateX = originX - (originX - translateX) * factor;
+                translateY = originY - (originY - translateY) * factor;
+
+                updateTransform();
+            }
+
+            viewport.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY < 0 ? 0.12 : -0.12;
+                const rect = viewport.getBoundingClientRect();
+                zoom(delta, e.clientX - rect.left, e.clientY - rect.top);
+            }, { passive: false });
+
+            viewport.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            document.getElementById('btn-zoom-in').addEventListener('click', () => zoom(0.15));
+            document.getElementById('btn-zoom-out').addEventListener('click', () => zoom(-0.15));
+
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                scale = 1;
+                translateX = 40;
+                translateY = 20;
+                updateTransform();
+            });
+
+            document.getElementById('btn-fit').addEventListener('click', () => {
+                const rect = diagram.getBoundingClientRect();
+                const vWidth = viewport.clientWidth;
+                const vHeight = viewport.clientHeight;
+                
+                const diagramW = diagram.offsetWidth || 1200;
+                const diagramH = diagram.offsetHeight || 900;
+
+                const scaleX = (vWidth - 80) / diagramW;
+                const scaleY = (vHeight - 80) / diagramH;
+                scale = Math.max(0.4, Math.min(scaleX, scaleY, 1.2));
+                
+                translateX = Math.max(20, (vWidth - diagramW * scale) / 2);
+                translateY = 20;
+                updateTransform();
+            });
+
+            // Initial center / fit
+            setTimeout(() => {
+                document.getElementById('btn-fit').click();
+            }, 100);
+        }
+    </script>
+</body>
+</html>

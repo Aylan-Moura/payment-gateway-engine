@@ -42,6 +42,6 @@ public class RabbitMQConfig {
     
     @Bean
     Binding binding() {
-        return BindingBuilder.bind(paymentCreatedQueue()).to(exchange()).with("payment.created.routing");
+        return BindingBuilder.bind(paymentCreatedQueue()).to(exchange()).with("payment.created");
     }
 }

@@ -5,13 +5,18 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+env:
+  # Uma unica tag (SHA do commit) usada por todos os jobs e pelo compose na EC2.
+  IMAGE_TAG: ${{ github.sha }}
+  # Namespace do Docker Hub (deve ser igual ao DOCKER_HUB_USERNAME).
+  IMAGE_NAMESPACE: ${{ secrets.DOCKER_HUB_USERNAME }}
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    outputs:
-      image-tag: ${{ steps.set-image-tag.outputs.tag }}
+    timeout-minutes: 30
     steps:
-      - name: Checkout do Código
+      - name: Checkout do Codigo
         uses: actions/checkout@v4
 
       - name: Configurar o Java JDK 17
@@ -21,33 +26,24 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Compilar a Aplicação
-        run: mvn clean compile -DskipTests
-
       - name: Executar Testes Automatizados
-        run: mvn test
-
-      - name: Set Image Tag
-        id: set-image-tag
-        run: echo "tag=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+        run: mvn -B clean test
 
   build-docker-images:
     needs: build-and-test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
-      - name: Checkout do Código
+      - name: Checkout do Codigo
         uses: actions/checkout@v4
-
-      - name: Set Image Tag
-        id: set-image-tag
-        run: echo "tag=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
 
       - name: Build Docker Images
         run: |
-          docker build -t payment-gateway/auth-service:${{ steps.set-image-tag.outputs.tag }} ./auth-service
-          docker build -t payment-gateway/payment-core-service:${{ steps.set-image-tag.outputs.tag }} ./payment-core-service
-          docker build -t payment-gateway/processor-worker:${{ steps.set-image-tag.outputs.tag }} ./processor-worker
-          docker build -t payment-gateway/api-gateway:${{ steps.set-image-tag.outputs.tag }} ./api-gateway
+          docker build -f auth-service/Dockerfile -t ${IMAGE_NAMESPACE}/auth-service:${IMAGE_TAG} .
+          docker build -f payment-core-service/Dockerfile -t ${IMAGE_NAMESPACE}/payment-core-service:${IMAGE_TAG} .
+          docker build -f processor-worker/Dockerfile -t ${IMAGE_NAMESPACE}/processor-worker:${IMAGE_TAG} .
+          docker build -f api-gateway/Dockerfile -t ${IMAGE_NAMESPACE}/api-gateway:${IMAGE_TAG} .
+          docker build -t ${IMAGE_NAMESPACE}/frontend-dashboard:${IMAGE_TAG} ./frontend-dashboard
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -57,22 +53,30 @@ jobs:
 
       - name: Push Docker Images
         run: |
-          docker push payment-gateway/auth-service:${{ steps.set-image-tag.outputs.tag }}
-          docker push payment-gateway/payment-core-service:${{ steps.set-image-tag.outputs.tag }}
-          docker push payment-gateway/processor-worker:${{ steps.set-image-tag.outputs.tag }}
-          docker push payment-gateway/api-gateway:${{ steps.set-image-tag.outputs.tag }}
+          docker push ${IMAGE_NAMESPACE}/auth-service:${IMAGE_TAG}
+          docker push ${IMAGE_NAMESPACE}/payment-core-service:${IMAGE_TAG}
+          docker push ${IMAGE_NAMESPACE}/processor-worker:${IMAGE_TAG}
+          docker push ${IMAGE_NAMESPACE}/api-gateway:${IMAGE_TAG}
+          docker push ${IMAGE_NAMESPACE}/frontend-dashboard:${IMAGE_TAG}
 
   deploy:
     needs: build-docker-images
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Checkout do Código
+      - name: Checkout do Codigo
         uses: actions/checkout@v4
 
-      - name: Set Image Tag
-        id: set-image-tag
-        run: echo "tag=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+      - name: Copiar arquivos de infraestrutura para o servidor
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.prod.yml,prometheus.yml,grafana/**"
+          target: "/opt/payment-gateway"
+          overwrite: true
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -81,10 +85,15 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
             cd /opt/payment-gateway
-            sed -i "s|payment-gateway/auth-service:.*|payment-gateway/auth-service:${{ steps.set-image-tag.outputs.tag }}|g" docker-compose.prod.yml
-            sed -i "s|payment-gateway/payment-core-service:.*|payment-gateway/payment-core-service:${{ steps.set-image-tag.outputs.tag }}|g" docker-compose.prod.yml
-            sed -i "s|payment-gateway/processor-worker:.*|payment-gateway/processor-worker:${{ steps.set-image-tag.outputs.tag }}|g" docker-compose.prod.yml
-            sed -i "s|payment-gateway/api-gateway:.*|payment-gateway/api-gateway:${{ steps.set-image-tag.outputs.tag }}|g" docker-compose.prod.yml
-            docker-compose -f docker-compose.prod.yml pull
-            docker-compose -f docker-compose.prod.yml up -d --remove-orphans
+            test -f .env || { echo "Arquivo .env ausente em /opt/payment-gateway"; exit 1; }
+            IMAGE_NAMESPACE="${{ env.IMAGE_NAMESPACE }}"
+            IMAGE_TAG="${{ env.IMAGE_TAG }}"
+            for svc in auth-service payment-core-service processor-worker api-gateway frontend-dashboard; do
+              sed -i -E "s|(image: ).*/${svc}:.*|\1${IMAGE_NAMESPACE}/${svc}:${IMAGE_TAG}|" docker-compose.prod.yml
+            done
+            docker compose -f docker-compose.prod.yml config -q
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml ps

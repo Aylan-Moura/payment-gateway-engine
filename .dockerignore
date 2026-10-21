@@ -1,0 +1,20 @@
+# Build artifacts and heavy directories
+**/target
+**/node_modules
+frontend-dashboard
+.git
+.github
+.idea
+.vscode
+.opencode
+.agents
+grafana
+prometheus.yml
+infra
+scripts
+prints
+*.md
+*.log
+.env
+.env.*
+docker-compose*.yml

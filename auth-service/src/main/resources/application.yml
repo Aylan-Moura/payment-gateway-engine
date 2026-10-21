@@ -16,6 +16,7 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+    table: flyway_schema_history_auth
 
 server:
   port: 8081
@@ -24,3 +25,13 @@ jwt:
   secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
   expiration: 86400000
   refresh-expiration: 604800000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -12,6 +10,11 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - payment-network
     restart: unless-stopped
@@ -44,8 +47,8 @@ services:
 
   auth-service:
     build:
-      context: ./auth-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: auth-service/Dockerfile
     container_name: auth-service
     ports:
       - "8081:8081"
@@ -58,18 +61,20 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=admin
       - SPRING_RABBITMQ_PASSWORD=adminpassword
-      - JWT_SECRET=super-secret-jwt-key-change-in-production-must-be-256-bits
+      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
     networks:
       - payment-network
     depends_on:
-      - postgres
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
     restart: unless-stopped
 
   payment-core-service:
     build:
-      context: ./payment-core-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: payment-core-service/Dockerfile
     container_name: payment-core-service
     ports:
       - "8082:8082"
@@ -85,14 +90,37 @@ services:
     networks:
       - payment-network
     depends_on:
-      - postgres
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    restart: unless-stopped
+
+  localstack:
+    image: localstack/localstack:2.3
+    container_name: localstack-gateway
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstackdata:/var/lib/localstack
+      - ./infra/localstack/init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - payment-network
     restart: unless-stopped
 
   processor-worker:
     build:
-      context: ./processor-worker
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: processor-worker/Dockerfile
     container_name: processor-worker
     ports:
       - "8083:8083"
@@ -105,19 +133,26 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=admin
       - SPRING_RABBITMQ_PASSWORD=adminpassword
-      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_S3_ENDPOINT_URL=http://localstack:4566
       - AWS_S3_BUCKET=payment-receipts
+      - AWS_S3_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
     networks:
       - payment-network
     depends_on:
-      - postgres
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      localstack:
+        condition: service_healthy
     restart: unless-stopped
 
   api-gateway:
     build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-gateway/Dockerfile
     container_name: api-gateway
     ports:
       - "8080:8080"
@@ -127,12 +162,27 @@ services:
       - SPRING_DATA_REDIS_PORT=6379
       - AUTH_SERVICE_URL=http://auth-service:8081
       - PAYMENT_CORE_SERVICE_URL=http://payment-core-service:8082
+      - PROCESSOR_WORKER_URL=http://processor-worker:8083
+      - CORS_ALLOWED_ORIGINS=http://localhost:3001
     networks:
       - payment-network
     depends_on:
       - redis
       - auth-service
       - payment-core-service
+    restart: unless-stopped
+
+  frontend-dashboard:
+    build:
+      context: ./frontend-dashboard
+      dockerfile: Dockerfile
+    container_name: frontend-dashboard
+    ports:
+      - "3001:80"
+    networks:
+      - payment-network
+    depends_on:
+      - api-gateway
     restart: unless-stopped
 
   prometheus:
@@ -172,6 +222,7 @@ volumes:
   rabbitmqdata:
   prometheusdata:
   grafanadata:
+  localstackdata:
 
 networks:
   payment-network:

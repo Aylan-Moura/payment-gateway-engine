@@ -32,6 +32,9 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
+        if (repository.findByEmail(request.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already registered");
+        }
         var merchant = MerchantEntity.builder()
                 .id(UUID.randomUUID())
                 .companyName(request.getCompanyName())
