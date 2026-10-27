@@ -55,6 +55,40 @@ public class AuthControllerTest {
     }
 
     @Test
+    void shouldRegisterNewMerchantWithWebhookUrl() throws Exception {
+        RegisterRequest request = new RegisterRequest();
+        request.setCompanyName("Webhook Company");
+        request.setEmail("webhook@company.com");
+        request.setPassword("securePassword123");
+        request.setWebhookUrl(" https://loja.exemplo.com/webhooks/payments ");
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        var merchant = merchantRepository.findByEmail("webhook@company.com").orElseThrow();
+        assertEquals("https://loja.exemplo.com/webhooks/payments", merchant.getWebhookUrl());
+    }
+
+    @Test
+    void shouldRejectInvalidWebhookUrl() throws Exception {
+        RegisterRequest request = new RegisterRequest();
+        request.setCompanyName("Invalid Webhook Company");
+        request.setEmail("invalid-webhook@company.com");
+        request.setPassword("securePassword123");
+        request.setWebhookUrl("ftp://loja.exemplo.com/webhook");
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").exists());
+
+        assertFalse(merchantRepository.findByEmail("invalid-webhook@company.com").isPresent());
+    }
+
+    @Test
     void shouldFailLoginWithIncorrectPassword() throws Exception {
         RegisterRequest register = new RegisterRequest();
         register.setCompanyName("Test Company");

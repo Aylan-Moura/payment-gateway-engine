@@ -34,7 +34,8 @@ public class PublishPaymentEventAdapter implements PublishPaymentEventPort {
                 transaction.getMerchantId(),
                 transaction.getAmount(),
                 transaction.getMethod().name(),
-                transaction.getStatus().name()
+                transaction.getStatus().name(),
+                transaction.getWebhookUrl()
         );
         try {
             String jsonMessage = objectMapper.writeValueAsString(message);

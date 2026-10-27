@@ -14,4 +14,8 @@ public class RegisterRequest {
 
     @Schema(description = "Senha do merchant", example = "senha-segura")
     private String password;
+
+    @Schema(description = "URL de webhook que recebera as notificacoes de pagamento (opcional)",
+            example = "https://loja.exemplo.com/webhooks/payments")
+    private String webhookUrl;
 }

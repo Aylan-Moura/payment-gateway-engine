@@ -28,6 +28,7 @@ public class PublishPaymentEventAdapterTest {
     void shouldPublishPaymentEventSuccessfully() throws Exception {
         PublishPaymentEventAdapter adapter = new PublishPaymentEventAdapter(rabbitTemplate, objectMapper, "payment.exchange", "payment.created");
         Transaction tx = new Transaction(UUID.randomUUID(), new BigDecimal("250.00"), "CREDIT_CARD");
+        tx.setWebhookUrl("https://loja.exemplo.com/webhooks/payments");
 
         adapter.publish(tx);
 
@@ -40,5 +41,6 @@ public class PublishPaymentEventAdapterTest {
         assertEquals(tx.getAmount(), sent.getAmount());
         assertEquals("CREDIT_CARD", sent.getPaymentMethod());
         assertEquals("PENDING", sent.getStatus());
+        assertEquals("https://loja.exemplo.com/webhooks/payments", sent.getWebhookUrl());
     }
 }

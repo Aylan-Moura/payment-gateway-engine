@@ -28,6 +28,7 @@ public class SaveTransactionAdapterTest {
     @Test
     void shouldSaveTransactionSuccessfully() {
         Transaction tx = new Transaction(UUID.randomUUID(), new BigDecimal("100.00"), "PIX");
+        tx.setWebhookUrl("https://loja.exemplo.com/webhooks");
         adapter.save(tx);
 
         Optional<TransactionEntity> found = repository.findById(tx.getId());
@@ -35,5 +36,6 @@ public class SaveTransactionAdapterTest {
         assertEquals(tx.getAmount(), found.get().getAmount());
         assertEquals(tx.getStatus(), found.get().getStatus());
         assertEquals(tx.getMethod(), found.get().getMethod());
+        assertEquals("https://loja.exemplo.com/webhooks", found.get().getWebhookUrl());
     }
 }

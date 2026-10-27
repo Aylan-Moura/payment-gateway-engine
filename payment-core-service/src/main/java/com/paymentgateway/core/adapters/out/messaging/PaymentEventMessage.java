@@ -9,15 +9,18 @@ public class PaymentEventMessage {
     private BigDecimal amount;
     private String paymentMethod;
     private String status;
+    private String webhookUrl;
 
     public PaymentEventMessage() {}
 
-    public PaymentEventMessage(UUID transactionId, UUID merchantId, BigDecimal amount, String paymentMethod, String status) {
+    public PaymentEventMessage(UUID transactionId, UUID merchantId, BigDecimal amount,
+                               String paymentMethod, String status, String webhookUrl) {
         this.transactionId = transactionId;
         this.merchantId = merchantId;
         this.amount = amount;
         this.paymentMethod = paymentMethod;
         this.status = status;
+        this.webhookUrl = webhookUrl;
     }
 
     public UUID getTransactionId() { return transactionId; }
@@ -25,4 +28,5 @@ public class PaymentEventMessage {
     public BigDecimal getAmount() { return amount; }
     public String getPaymentMethod() { return paymentMethod; }
     public String getStatus() { return status; }
+    public String getWebhookUrl() { return webhookUrl; }
 }

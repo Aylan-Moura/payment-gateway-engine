@@ -9,6 +9,7 @@ public class Transaction {
     private BigDecimal amount;
     private TransactionStatus status;
     private PaymentMethod method;
+    private String webhookUrl;
 
     public Transaction(UUID merchantId, BigDecimal amount, String methodStr) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -26,6 +27,10 @@ public class Transaction {
     public BigDecimal getAmount() { return amount; }
     public TransactionStatus getStatus() { return status; }
     public PaymentMethod getMethod() { return method; }
+
+    public String getWebhookUrl() { return webhookUrl; }
+
+    public void setWebhookUrl(String webhookUrl) { this.webhookUrl = webhookUrl; }
     
     public void approve() {
         this.status = TransactionStatus.APPROVED;

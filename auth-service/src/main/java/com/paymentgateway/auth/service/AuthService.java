@@ -5,6 +5,7 @@ import com.paymentgateway.auth.dto.AuthResponse;
 import com.paymentgateway.auth.dto.LoginRequest;
 import com.paymentgateway.auth.dto.RefreshRequest;
 import com.paymentgateway.auth.dto.RegisterRequest;
+import com.paymentgateway.auth.exception.InvalidWebhookUrlException;
 import com.paymentgateway.auth.repository.MerchantRepository;
 import com.paymentgateway.auth.security.JwtUtil;
 import com.paymentgateway.auth.security.MerchantUserDetails;
@@ -12,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -41,6 +43,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .apiKey(UUID.randomUUID().toString())
+                .webhookUrl(validateWebhookUrl(request.getWebhookUrl()))
                 .createdAt(LocalDateTime.now())
                 .build();
         repository.save(merchant);
@@ -78,5 +81,33 @@ public class AuthService {
             }
         }
         throw new RuntimeException("Invalid refresh token");
+    }
+
+    /**
+     * Normaliza e valida a URL de webhook informada no registro.
+     * Retorna {@code null} quando nao informada (o worker usa a URL padrao configurada).
+     */
+    private String validateWebhookUrl(String webhookUrl) {
+        if (webhookUrl == null || webhookUrl.isBlank()) {
+            return null;
+        }
+
+        String trimmed = webhookUrl.trim();
+        if (trimmed.length() > 500) {
+            throw new InvalidWebhookUrlException("Webhook URL must have at most 500 characters");
+        }
+
+        try {
+            URI uri = URI.create(trimmed);
+            String scheme = uri.getScheme();
+            boolean httpScheme = "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
+            if (!httpScheme || uri.getHost() == null) {
+                throw new InvalidWebhookUrlException("Webhook URL must be an absolute http(s) URL");
+            }
+        } catch (IllegalArgumentException e) {
+            throw new InvalidWebhookUrlException("Webhook URL is invalid");
+        }
+
+        return trimmed;
     }
 }

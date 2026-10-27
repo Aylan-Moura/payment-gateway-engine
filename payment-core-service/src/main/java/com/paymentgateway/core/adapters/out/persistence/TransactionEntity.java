@@ -29,6 +29,9 @@ public class TransactionEntity {
     @Column(name = "payment_method", nullable = false)
     private PaymentMethod method;
 
+    @Column(name = "webhook_url", length = 500)
+    private String webhookUrl;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -40,6 +43,7 @@ public class TransactionEntity {
         this.amount = domain.getAmount();
         this.status = domain.getStatus();
         this.method = domain.getMethod();
+        this.webhookUrl = domain.getWebhookUrl();
     }
 
     public UUID getId() { return id; }
@@ -47,5 +51,6 @@ public class TransactionEntity {
     public BigDecimal getAmount() { return amount; }
     public TransactionStatus getStatus() { return status; }
     public PaymentMethod getMethod() { return method; }
+    public String getWebhookUrl() { return webhookUrl; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

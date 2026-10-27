@@ -32,6 +32,12 @@ spring:
           max-attempts: 3
           initial-interval: 1000ms
 
+app:
+  webhook:
+    # URL usada quando o merchant nao configurou webhook propria.
+    # Vazio = nao envia webhook (apenas loga um aviso).
+    default-url: ${WEBHOOK_DEFAULT_URL:}
+
 aws:
   s3:
     bucket: ${AWS_S3_BUCKET:payment-receipts}

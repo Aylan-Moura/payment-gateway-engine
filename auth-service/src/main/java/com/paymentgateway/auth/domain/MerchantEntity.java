@@ -32,6 +32,9 @@ public class MerchantEntity {
     
     @Column(name = "api_key", nullable = false, unique = true)
     private String apiKey;
+
+    @Column(name = "webhook_url", length = 500)
+    private String webhookUrl;
     
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

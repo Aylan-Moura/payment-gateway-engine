@@ -11,4 +11,5 @@ public class PaymentMessage {
     private BigDecimal amount;
     private String paymentMethod;
     private String status;
+    private String webhookUrl;
 }
