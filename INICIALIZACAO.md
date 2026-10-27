@@ -65,6 +65,7 @@ Para ver o sistema em ação, siga este fluxo:
     - O `payment-core-service` receberá a requisição e salvará a transação como `PENDING`.
     - Uma mensagem será enviada para o **RabbitMQ**.
     - O `processor-worker` consumirá a mensagem, processará o pagamento (mudando para `APPROVED`) e gerará um recibo.
+    - Se o merchant cadastrou `webhookUrl` (ou existir `WEBHOOK_DEFAULT_URL`), o worker envia `POST` com o status para essa URL.
 5.  **Verifique os Logs**:
     ```bash
     docker-compose logs -f processor-worker
@@ -78,4 +79,5 @@ Para ver o sistema em ação, siga este fluxo:
 - **Parar tudo**: `docker-compose down`
 - **Ver logs de um serviço específico**: `docker-compose logs -f <nome-do-serviço>`
 - **Reiniciar um serviço**: `docker-compose restart <nome-do-serviço>`
-- **Limpar volumes (resetar banco de dados)**: `docker-compose down -v`
+- **Backup do banco (producao)**: `bash scripts/backup.sh` (ver README)
+- **Limpar volumes (resetar banco de dados)**: `docker-compose down -v` (⚠️ apaga dados)
