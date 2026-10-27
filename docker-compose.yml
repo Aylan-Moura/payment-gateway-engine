@@ -31,7 +31,7 @@ services:
     restart: unless-stopped
 
   rabbitmq:
-    image: rabbitmq:3.12-management-alpine
+    image: rabbitmq:4.1-management-alpine
     container_name: rabbitmq-gateway
     environment:
       RABBITMQ_DEFAULT_USER: admin
@@ -138,6 +138,10 @@ services:
       - AWS_S3_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
+      - WEBHOOK_DEFAULT_URL=${WEBHOOK_DEFAULT_URL:-}
+    extra_hosts:
+      # Permite testar webhooks locais (http://host.docker.internal:9999/...).
+      - "host.docker.internal:host-gateway"
     networks:
       - payment-network
     depends_on:

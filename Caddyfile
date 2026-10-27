@@ -1,0 +1,29 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# API e metricas vao direto para o gateway.
+	handle /api/* {
+		reverse_proxy api-gateway:8080
+	}
+
+	handle /actuator/* {
+		reverse_proxy api-gateway:8080
+	}
+
+	# Todo o resto e o dashboard Angular servido pelo nginx.
+	handle {
+		reverse_proxy frontend-dashboard:80
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}

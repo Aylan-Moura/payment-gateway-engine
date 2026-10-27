@@ -58,7 +58,7 @@ class PaymentEngineE2ETest {
 
     @Container
     static final RabbitMQContainer RABBITMQ = new RabbitMQContainer(
-            DockerImageName.parse("rabbitmq:3.12-management-alpine"));
+            DockerImageName.parse("rabbitmq:4.1-management-alpine"));
 
     @Container
     static final LocalStackContainer LOCALSTACK = new LocalStackContainer(
