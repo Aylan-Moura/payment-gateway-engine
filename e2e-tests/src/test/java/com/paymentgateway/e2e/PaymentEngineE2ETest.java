@@ -6,13 +6,19 @@ import com.paymentgateway.worker.repository.TransactionEntity;
 import com.paymentgateway.worker.repository.WorkerTransactionRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.localstack.LocalStackContainer;
@@ -28,6 +34,8 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -111,6 +119,12 @@ class PaymentEngineE2ETest {
     @Autowired
     private WorkerTransactionRepository transactionRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
     @Test
     void contextLoadsAndContainersAreRunning() {
         assertTrue(POSTGRESQL.isRunning());
@@ -120,11 +134,15 @@ class PaymentEngineE2ETest {
 
     @Test
     void shouldProcessPaymentEndToEnd() throws Exception {
-        UUID merchantId = UUID.randomUUID();
-        
-        // Step 1: Create payment via REST API
+        String email = "e2e-" + UUID.randomUUID() + "@exemplo.com";
+        String apiKey = UUID.randomUUID().toString();
+        UUID merchantId = createMerchant(email, apiKey);
+
+        // Step 1: Create payment via REST API (authenticated as the merchant)
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(tokenFor(email));
+        headers.set("X-API-Key", apiKey);
         String requestBody = String.format(
             "{\"merchantId\":\"%s\",\"amount\":150.00,\"paymentMethod\":\"PIX\"}", 
             merchantId
@@ -156,6 +174,39 @@ class PaymentEngineE2ETest {
             assertNotNull(updated);
             assertEquals("APPROVED", updated.getStatus());
         });
+    }
+
+    @Test
+    void shouldRejectPaymentWithoutToken() throws Exception {
+        // HttpClient do JDK: o HttpURLConnection do TestRestTemplate nao le 401 em streaming.
+        var request = java.net.http.HttpRequest.newBuilder()
+                .uri(java.net.URI.create("http://localhost:" + port + "/api/v1/payments"))
+                .header("Content-Type", "application/json")
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString("{}"))
+                .build();
+
+        var response = java.net.http.HttpClient.newHttpClient()
+                .send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+
+        assertEquals(401, response.statusCode());
+    }
+
+    private UUID createMerchant(String email, String apiKey) {
+        UUID merchantId = UUID.randomUUID();
+        jdbcTemplate.update(
+            "INSERT INTO merchants (id, company_name, email, password_hash, api_key, webhook_url, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            merchantId, "E2E Merchant", email, "not-used", apiKey, null, LocalDateTime.now());
+        return merchantId;
+    }
+
+    private String tokenFor(String email) {
+        return Jwts.builder()
+            .setSubject(email)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + 300_000))
+            .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret)), SignatureAlgorithm.HS256)
+            .compact();
     }
 
     private UUID extractTransactionId(String body) throws Exception {

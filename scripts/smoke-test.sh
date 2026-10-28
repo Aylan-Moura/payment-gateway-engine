@@ -78,4 +78,44 @@ if [ "$PAYMENT_STATUS" -ne 201 ]; then
   exit 1
 fi
 
+echo "4a. Testando pagamento sem token (esperado 401)..."
+NOAUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$GATEWAY_URL/api/v1/payments" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $APIKEY" \
+  -d "{\"merchantId\":\"$MERCHANT\",\"amount\":10.00,\"paymentMethod\":\"PIX\"}")
+
+echo "Status HTTP sem token: $NOAUTH_STATUS (esperado 401)"
+
+if [ "$NOAUTH_STATUS" -ne 401 ]; then
+  echo "Falha: pagamento sem token deveria retornar 401, retornou $NOAUTH_STATUS."
+  exit 1
+fi
+
+echo "4b. Testando merchantId de outro lojista (esperado 403)..."
+FOREIGN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$GATEWAY_URL/api/v1/payments" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-API-Key: $APIKEY" \
+  -d "{\"merchantId\":\"00000000-0000-0000-0000-000000000000\",\"amount\":10.00,\"paymentMethod\":\"PIX\"}")
+
+echo "Status HTTP merchantId estrangeiro: $FOREIGN_STATUS (esperado 403)"
+
+if [ "$FOREIGN_STATUS" -ne 403 ]; then
+  echo "Falha: merchantId de outro lojista deveria retornar 403, retornou $FOREIGN_STATUS."
+  exit 1
+fi
+
+echo "4c. Testando webhook inválido (esperado 400)..."
+WEBHOOK_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PUT "$GATEWAY_URL/api/v1/merchants/me/webhook" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d "{\"webhookUrl\":\"ftp://loja.exemplo.com/webhook\"}")
+
+echo "Status HTTP webhook inválido: $WEBHOOK_STATUS (esperado 400)"
+
+if [ "$WEBHOOK_STATUS" -ne 400 ]; then
+  echo "Falha: webhook inválido deveria retornar 400, retornou $WEBHOOK_STATUS."
+  exit 1
+fi
+
 echo "=== Smoke Test concluído com sucesso ==="

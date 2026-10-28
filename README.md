@@ -187,6 +187,8 @@ Recomendacoes:
 - Nunca commite `.env`; rotacione as senhas de exemplo antes de producao.
 - O `JWT_SECRET` de desenvolvimento nao deve ser usado em producao.
 - Servicos internos nao expoem portas em producao; apenas Caddy (80/443) e SSH.
+- `POST /api/v1/payments` exige `Authorization: Bearer <JWT>` **e** `X-API-Key` do mesmo merchant. O `merchantId` do corpo (opcional) precisa pertencer ao merchant autenticado; caso contrario a resposta e **403**, e sem token valido e **401**.
+- O `auth-service` valida o JWT em todas as rotas, exceto `/api/v1/auth/*`, actuator e Swagger. A URL de webhook pode ser alterada em `PUT /api/v1/merchants/me/webhook` (autenticado).
+- O endpoint de comprovantes (`/api/v1/receipts/{transactionId}`) ainda nao exige autenticacao; o UUID da transacao funciona como capability. Restrinja o acesso no proxy/gateway se os comprovantes forem sensiveis.
 - Webhook por lojista validado na borda (`http`/`https` absoluta); o `WEBHOOK_DEFAULT_URL` deve apontar para um endpoint confiavel.
 - Webhooks sao URLs escolhidas pelo lojista: restrinja a saida de rede do worker (egress/allowlist) para reduzir risco de SSRF contra a rede interna e o metadata endpoint da cloud.
-- Limitacao conhecida: o `auth-service` ainda nao valida JWT em rotas protegidas (nao ha filtro JWT) e o `payment-core-service` nao exige autenticacao; o `X-API-Key` hoje e usado apenas para rate limit. Antes de expor a API publicamente, implemente o filtro JWT no auth-service e a validacao no gateway/payment-core.

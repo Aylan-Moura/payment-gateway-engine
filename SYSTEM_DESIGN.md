@@ -104,15 +104,15 @@ Ponto de entrada centralizado.
 
 ### 3.2. Auth Service (`auth-service`)
 Gerenciamento de identidades.
-- **Funcionalidades:** Registro, Login, Refresh Token (JWT).
-- **Segurança:** Autenticação baseada em JWT com Spring Security.
-- **Armazenamento:** Tabela `merchants` (PostgreSQL).
+- **Funcionalidades:** Registro, Login, Refresh Token (JWT) e configuracao de webhook do lojista.
+- **Segurança:** Spring Security com filtro JWT; rotas `/api/v1/auth/*` sao publicas e as demais exigem Bearer token.
+- **Armazenamento:** Tabela `merchants` (PostgreSQL), incluindo `webhook_url`.
 
 ### 3.3. Payment Core Service (`payment-core-service`)
 Orquestração de pagamentos.
 - **Domínio:** Implementa a lógica de negócio principal (Clean Architecture).
-- **Endpoints:** `/api/v1/payments`.
-- **Persistência:** Tabela `transactions`.
+- **Endpoints:** `/api/v1/payments` (exige JWT e `X-API-Key` do mesmo merchant).
+- **Persistência:** Tabela `transactions` (com `webhook_url` copiada do merchant).
 - **Mensageria:** Publica eventos (`payment.created`) para RabbitMQ para processamento assíncrono.
 
 ### 3.4. Processor Worker (`processor-worker`)
@@ -121,28 +121,28 @@ Processamento em background.
     - Consumo da fila `payment.created`.
     - Atualização do status da transação para `APPROVED`.
     - Geração de recibos e armazenamento em S3 (`S3ReceiptService`).
-    - Disparo de webhooks para o lojista com suporte a retentativas automáticas (`Spring Retry`).
+    - Disparo de webhooks para a URL do lojista (ou `WEBHOOK_DEFAULT_URL`) com suporte a retentativas automáticas (`Spring Retry`).
 - **Resiliência:** Configuração de Dead Letter Queue (`payment.dlq`) para mensagens que falham após retentativas.
 
 ### 3.5. Frontend Dashboard (`frontend-dashboard`)
-SPA minimalista.
-- **Tecnologias:** HTML5, Vanilla JS, Bootstrap 5.
+SPA.
+- **Tecnologias:** Angular, nginx e Tailwind.
 - **Features:** Cadastro/Login, Checkout, Tabela de transações, Download de recibos.
 
 ## 4. Esquema de Banco de Dados
 ### 4.1. Tabela `merchants` (`auth-service`)
-- `id` (UUID), `company_name` (VARCHAR), `email` (UNIQUE VARCHAR), `password_hash` (VARCHAR), `api_key` (UNIQUE VARCHAR), `created_at` (TIMESTAMP).
+- `id` (UUID), `company_name` (VARCHAR), `email` (UNIQUE VARCHAR), `password_hash` (VARCHAR), `api_key` (UNIQUE VARCHAR), `webhook_url` (VARCHAR), `created_at` (TIMESTAMP).
 
 ### 4.2. Tabela `transactions` (`payment-core-service`)
-- `id` (UUID), `merchant_id` (UUID), `amount` (NUMERIC), `status` (VARCHAR), `payment_method` (VARCHAR), `created_at` (TIMESTAMP).
+- `id` (UUID), `merchant_id` (UUID), `amount` (NUMERIC), `status` (VARCHAR), `payment_method` (VARCHAR), `webhook_url` (VARCHAR), `created_at` (TIMESTAMP).
 
 ## 5. Fluxo de Processamento (Mensageria)
-1. Requisição recebida no `payment-core-service`.
-2. Transação persistida como `PENDING`.
+1. Requisição recebida no `payment-core-service` (autenticada por JWT + API Key).
+2. Transação persistida como `PENDING` com a URL de webhook do merchant.
 3. Evento publicado em `payment.exchange` com routing-key `payment.created.routing`.
 4. `processor-worker` consome a fila `payment.created`.
 5. Transação atualizada para `APPROVED`.
-6. Recibo gerado no S3 e webhook enviado ao lojista.
+6. Recibo gerado no S3 e webhook enviado ao lojista (ou ignorado, com log, se nao houver URL).
 
 ## 6. Observabilidade
 - **Actuator/Prometheus:** Métricas coletadas em todos os serviços.

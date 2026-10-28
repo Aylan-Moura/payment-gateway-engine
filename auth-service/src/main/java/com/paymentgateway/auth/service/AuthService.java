@@ -84,6 +84,20 @@ public class AuthService {
     }
 
     /**
+     * Atualiza a URL de webhook do merchant autenticado.
+     *
+     * @return a URL persistida ou {@code null} quando a configuracao foi removida.
+     */
+    public String updateWebhookUrl(String email, String webhookUrl) {
+        var merchant = repository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("Authenticated merchant not found: " + email));
+        String validated = validateWebhookUrl(webhookUrl);
+        merchant.setWebhookUrl(validated);
+        repository.save(merchant);
+        return validated;
+    }
+
+    /**
      * Normaliza e valida a URL de webhook informada no registro.
      * Retorna {@code null} quando nao informada (o worker usa a URL padrao configurada).
      */

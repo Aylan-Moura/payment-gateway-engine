@@ -31,6 +31,10 @@ app:
     exchange: payment.exchange
     routing-key: payment.created
 
+jwt:
+  # Mesmo segredo do auth-service (env JWT_SECRET em producao).
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+
 management:
   endpoints:
     web:

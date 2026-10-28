@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -86,6 +87,62 @@ public class AuthControllerTest {
                 .andExpect(jsonPath("$.error").exists());
 
         assertFalse(merchantRepository.findByEmail("invalid-webhook@company.com").isPresent());
+    }
+
+    @Test
+    void shouldRejectWebhookUpdateWithoutToken() throws Exception {
+        mockMvc.perform(put("/api/v1/merchants/me/webhook")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"webhookUrl\":\"https://loja.exemplo.com/webhooks\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldUpdateWebhookForAuthenticatedMerchant() throws Exception {
+        RegisterRequest register = new RegisterRequest();
+        register.setCompanyName("Update Webhook Company");
+        register.setEmail("update-webhook@company.com");
+        register.setPassword("securePassword123");
+
+        String response = mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(register)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        String token = objectMapper.readTree(response).get("token").asText();
+
+        mockMvc.perform(put("/api/v1/merchants/me/webhook")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"webhookUrl\":\"https://loja.exemplo.com/v2/webhooks\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.webhookUrl").value("https://loja.exemplo.com/v2/webhooks"));
+
+        assertEquals("https://loja.exemplo.com/v2/webhooks",
+                merchantRepository.findByEmail("update-webhook@company.com").orElseThrow().getWebhookUrl());
+    }
+
+    @Test
+    void shouldRejectInvalidWebhookUrlOnUpdate() throws Exception {
+        RegisterRequest register = new RegisterRequest();
+        register.setCompanyName("Invalid Update Company");
+        register.setEmail("invalid-update@company.com");
+        register.setPassword("securePassword123");
+
+        String response = mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(register)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        String token = objectMapper.readTree(response).get("token").asText();
+
+        mockMvc.perform(put("/api/v1/merchants/me/webhook")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"webhookUrl\":\"not-a-url\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
