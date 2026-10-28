@@ -2,9 +2,12 @@ name: Java CI Pipeline (Payment Gateway Engine)
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "**" ]
   pull_request:
     branches: [ "main", "develop" ]
+
+permissions:
+  contents: read
 
 jobs:
   build-and-test:
@@ -22,12 +25,36 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Executar Testes Automatizados
+      - name: Executar Testes Unitarios (exceto E2E)
         run: |
           if [ -x ./mvnw ]; then
-            ./mvnw -B clean test
+            ./mvnw -B clean test -pl '!e2e-tests'
           else
-            mvn -B clean test
+            mvn -B clean test -pl '!e2e-tests'
+          fi
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build-and-test
+
+    steps:
+      - name: Checkout do Codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar o Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Executar Testes E2E (Testcontainers)
+        run: |
+          if [ -x ./mvnw ]; then
+            ./mvnw -B -pl e2e-tests -am test
+          else
+            mvn -B -pl e2e-tests -am test
           fi
 
   frontend-build:
