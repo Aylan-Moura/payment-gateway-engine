@@ -2,6 +2,7 @@
 **/target
 **/node_modules
 frontend-dashboard
+openspec
 .git
 .github
 .idea
@@ -14,6 +15,7 @@ infra
 scripts
 prints
 *.md
+*.html
 *.log
 .env
 .env.*

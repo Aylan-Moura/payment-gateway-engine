@@ -90,6 +90,9 @@ Para testar localmente, suba um receptor na sua maquina e cadastre `http://host.
 
 ```bash
 cd /opt/payment-gateway
+# O workflow de deploy mantem .env.example atualizado no servidor.
+# No primeiro deploy, envie o template do seu checkout local:
+#   scp .env.example <EC2_USER>@<EC2_HOST>:/opt/payment-gateway/.env
 cp .env.example .env
 # edite .env:
 #   POSTGRES_PASSWORD, RABBITMQ_PASSWORD, GRAFANA_PASSWORD
@@ -142,10 +145,16 @@ O workflow `.github/workflows/deploy.yml`:
 1. roda os testes;
 2. builda as 5 imagens (4 servicos Java + frontend) com a tag do commit;
 3. publica no Docker Hub;
-4. copia `docker-compose.prod.yml`, `Caddyfile`, `prometheus.yml`, `scripts/` e `grafana/` para `/opt/payment-gateway`;
+4. copia `docker-compose.prod.yml`, `Caddyfile`, `prometheus.yml`, `.env.example`, `scripts/` e `grafana/` para `/opt/payment-gateway`;
 5. atualiza a tag no compose e roda `docker compose up -d`.
 
-O arquivo `/opt/payment-gateway/.env` precisa existir no servidor.
+O arquivo `/opt/payment-gateway/.env` precisa existir no servidor (nao e copiado pelo workflow).
+
+Depois do deploy, valide o ambiente publico:
+
+```bash
+GATEWAY_URL=https://<DOMAIN> ORIGIN=https://<DOMAIN> bash scripts/smoke-test.sh
+```
 
 ## Backup e restore do PostgreSQL
 
