@@ -3,8 +3,8 @@
 ## Projeto
 Payment Gateway Engine: Spring Boot (microsserviços) + API Gateway (`:8080`) + Angular (`:3001`) + PostgreSQL + Flyway + Docker Compose.
 
-## Tarefa atual
-Seguir o plano em `AGENT_PLAN.md`, fase por fase (0 a 5), rodando a verificação de cada fase antes de avançar. Leia esse arquivo no início da sessão.
+## Estado atual
+Deploy readiness concluído: webhook por lojista, RabbitMQ 4.1, TLS com Caddy, backup do PostgreSQL e JWT efetivo. Consulte `README.md` (deploy, backup e segurança) e `SYSTEM_DESIGN.md`. Mudanças planejadas ficam em `openspec/changes`.
 
 ## Regras permanentes
 - CORS é configurado **somente** no `api-gateway`. Nunca nos serviços de backend.
